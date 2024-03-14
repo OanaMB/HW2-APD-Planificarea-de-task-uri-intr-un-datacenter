@@ -1,0 +1,29 @@
+    Acest program realizeaza un sistem de planificare a unor task-uri intr-un centru de date.
+Clasele implementate sunt MyDispatcher, ce extinde clasa Dispatcher, si se ocupa de algoritmii
+de planificare, si MyHost, ce extinde Host, si reprezinta un nod care stocheaza si executa task-uri.
+    In clasa MyDispatcher se afla implementarea celor 4 metode de planificare, Round Robin, SITA, Shortest Queue
+si Least Work Left, care sunt synchronized. Pentru Round Robin, folosim variabila atomica robin_number
+ca sa stocam nodul pe care trebuie pus taskul curent,numerotarea incepe de la 0. Pentru SITA, realizam un switch
+intre tipurile de task-uri si le trimitem pe nodurile corespunzatoare. Pentru Shortest Queue, calculam hostul cu
+elementele stocate (in runnning si in coada de asteptare) cele mai putine folosind functia getQueueSize().
+Asemanator, pentru Least Work Left trece prin toate hosturile si apeleaza getWorkLeft() ca sa afle timpul minim de
+executie a hostului.
+    In clasa MyHost, functia run merge cat timp nu este apelata functia shutdown. Run asteapta task-uri cu ajutorul functiei
+wait care "se blocheaza" cat timp coada este goala sau daca deja este in executie un task (variabila booleana atomica running stocheaza
+informatii in acest aspect), si va porni executia unui task, fiind notificat de notify, atunci cand in coada este introdus un element.
+In acest fel, functia run asteapta primul element trimis la dispatcher sa intre in coada. Ulterior, notify va fi
+apelat doar in cazul cand nu mai este rulat niciun task, iar run este deja in asteptare pentru ca in momentul cand a terminat
+task-ul ulterior nu a gasit un element in coada.
+    Pentru a fi rulat task-ul, consumam cate 200 de milisecunde pe procesor, folosind functia sleep si scadem
+repetat din atributul left al taskului tot cate 200ms. Tot in acest while, verificam continuu daca task-ul este
+preemptibil si daca in varful cozii se afla o functie cu o prioritate mai mare; daca aceste conditii sunt indeplinite,
+atunci taskul curent este oprit si adaugat inapoi in coada si este pus in rulare taskul prioritar. La final, dam finish
+task-ului si setam variabila running pe false, adica nu mai este executat niciun task.
+    In functia addtask, adaugam un task venit de la dispatcher in coada dupa regula prioritatii realizata de clasa ajutatoare
+PriorityComparator- care ordoneaza descrescator dupa prioritate si crescator dupa timpul de start- si notificam run daca
+nu ruleaza nimic la acel moment si sunt elemente de rulat.
+    In functia getQueueSize adaugam 1 la valoarea marimii cozii daca un task ruleaza, altfel trimitem size-ul cozii.
+    In functia getWorkLeft returnam variabila sum, la care se adauga valoriile duratelor task-urilor in momentul cand
+acestea intra in coada, apoi sum este decrementat cu cate 200 de milisecunde in run daca se executa un task.
+    In functia shutdown, vom da notify deoarece run va astepta la nesfarsit un task dupa ce ultimul a fost executat,
+dupa ce a iesit din wait, variabila task va fi initializata cu null si vom da break.
